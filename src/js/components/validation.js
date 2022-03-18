@@ -115,19 +115,20 @@
      *
      */
 
+    
     addDependencyRule(fields, condition) {
         
 
         $(fields).each((i, item) => {            
             if ($(this.el).find(`[name="${item}"]`)) {                
                 if (this.rules[item]) {
-                    this._addDependencyRule (item, condition);
-                    let isRequired = this._isRequired(item);
+                    this._addDependencyRule (item, condition);                   
                     this.rules[item] = {
                         required: {
-                            depends: function depends(element) {
+                            depends: (element) => {
                                 if (!$(element).closest('li').hasClass('MMM--isVisuallyHidden')) {
-                                    return isRequired;
+                                    
+                                    return this._isRequired(item);
                                 } else return false;
                                 
                             }
@@ -136,6 +137,7 @@
 
                     
                 } else {
+                    this._multiRules[item] = condition;
                     this.rules[item] = {
                         required: {
                             depends: function depends(element) {
@@ -176,14 +178,25 @@
 
         _isRequired(item) {
 
-        let trueOrFalse = false;
-        $(this._multiRules[item]).each((i, func) => {
-            if(func) {
-                trueOrFalse = true;                
+            let trueOrFalse = false;            
+
+        $(this._multiRules[item]).each((i, func) => {                    
+          
+
+            if(typeof(func) === 'function') {                
+
+                if(func()) {
+                    trueOrFalse = true;
+                }
+                
+                    
             }
         })
-
+        
         return trueOrFalse;
+       
+
+       
     }
 
 
@@ -227,4 +240,3 @@
     }
 
 }
-

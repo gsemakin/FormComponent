@@ -1,3 +1,5 @@
+
+
 /**
  * Class for displaying fields
  * @param {Object} el - Form Element
@@ -128,8 +130,8 @@
           let optNum = 0;
           let lastChosenOpt = '';
 
-          if (apps.length) {
-              $(this.el).find(`[name="mmmIndustry1"] option[data-${attributeName}]`).each(function (i, opt) {
+          if (apps.length) {            
+              $(this.el).find(`[name="${fNameToShow}"] option[data-${attributeName}]`).each(function (i, opt) {
               let attr = $(opt).data(attributeName);
               let optToShow = false;
               $(opt).hide();
