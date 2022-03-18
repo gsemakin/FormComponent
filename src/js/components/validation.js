@@ -13,6 +13,7 @@
         this.ids = [];
         this.groups = {};
         this.rules = {};
+        this._multiRules = {};
         this.instance = ++this.constructor._instance_;        
     }
 
@@ -89,7 +90,7 @@
         return this.groups;
     }
 
-    _getRequiredRules() {
+    _getRules() {
         return this.rules;
     }
 
@@ -99,7 +100,7 @@
      * @param {Boolean} trueOrFalse
      */
 
-    rules(arr, trueOrFalse) {
+    addRule(arr, trueOrFalse) {
 
         $(arr).each((i, item) => {
             $(`[name="${item}"]`).add('rules', { required: trueOrFalse })               
@@ -115,20 +116,74 @@
      */
 
     addDependencyRule(fields, condition) {
+        
 
-        $(fields).each((i, item) => {
-            if (($(this.el).find(`[name="${item}"]`)) && (!$(this.el).find(`[name="${item}"]`).hasClass('MMM--isVisuallyHidden'))) {
-            this.rules[item] = {
-                required: {
-                    depends: function depends(element) {
-                        return condition();
+        $(fields).each((i, item) => {            
+            if ($(this.el).find(`[name="${item}"]`)) {                
+                if (this.rules[item]) {
+                    this._addDependencyRule (item, condition);
+                    let isRequired = this._isRequired(item);
+                    this.rules[item] = {
+                        required: {
+                            depends: function depends(element) {
+                                if (!$(element).closest('li').hasClass('MMM--isVisuallyHidden')) {
+                                    return isRequired;
+                                } else return false;
+                                
+                            }
+                        }
+                    }
+
+                    
+                } else {
+                    this.rules[item] = {
+                        required: {
+                            depends: function depends(element) {
+                                if (!$(element).closest('li').hasClass('MMM--isVisuallyHidden')) {
+                                    return condition();
+                                } else return false;
+                                
+                            }
+                        }
                     }
                 }
-            }
         }
 
         })
 
+    }
+    
+
+    _addDependencyRule (item, condition){
+        let currentCond = this._multiRules[item];
+        let condArr = [];
+        if (Array.isArray(currentCond)) {
+            currentCond.push(condition);
+            condArr = currentCond;
+        }
+            else {                
+                condArr.push(currentCond);
+                condArr.push(condition);                
+            }
+
+            this._multiRules[item] = condArr;
+    
+      
+        
+    }
+
+
+
+        _isRequired(item) {
+
+        let trueOrFalse = false;
+        $(this._multiRules[item]).each((i, func) => {
+            if(func) {
+                trueOrFalse = true;                
+            }
+        })
+
+        return trueOrFalse;
     }
 
 
@@ -140,7 +195,7 @@
     render() {
         this.el.validate({
             groups: this._getChbxGroups(),
-            rules: this._getRequiredRules(),
+            rules: this._getRules(),
           
            
             errorPlacement: function errorPlacement(error, element) {
@@ -172,3 +227,4 @@
     }
 
 }
+

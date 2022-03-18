@@ -170,7 +170,6 @@
 
 complexDepFromSelect (fName1, fName2, scheme) {
 
- // let fName2Opts = $(this.el).find(`[name="${fName2}"] option`).each(function (i, opt) { alert ($(opt).val()) });
  let fName2Opts = $(this.el).find(`[name="${fName2}"] option`);   
 
 
