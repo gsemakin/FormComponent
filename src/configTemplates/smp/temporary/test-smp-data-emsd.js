@@ -17,7 +17,7 @@ var __globScopeSMPtemplate__ = {
         salesRequest: 'false',
     },
 
-
+    
     optionsForFilter: {
         mmmJobRole1: ["Chief Executive Officer","Distributor","Fabricator","Firefighter","Healthcare Professional","Industrial Hygienist","Installer","Law Enforcement","Machinist/Operator","Maintenance Mgr/Facilities Mgmt","Military Officer","Occupational Health Manager","Painter/Paint Professional","President/Owner","Production Manager","Project Manager","Purchasing/Procurement/Buyer","Safety Consultant","Engineer-Safety","Safety Manager","Sales","Trainer/Training","Welder","Other",],
         mmmIndustry1: ["Transp-Aerospace Mfg", "Transp-Automotive Mfg", "Industrial-Bearings &amp; Gears Mfg", "Industrial-Chemical Mfg", "Construction-Commercial", "Comms-Telecommunications", "Comms-Data Center", "Industrial-Electrical Equip Mfg", "Industrial-Fire Protection &amp; Suppr", "Industrial-Indust Machinery &amp; Equip Mfg", "Industrial-Medical Devices Mfg", "Industrial-Paints &amp; Coatings Mfg", "Utilities-Power Dist &amp; Transmission", "Utilities-Power Generation", "Electronics-Semicon &amp; Circuit Boards", "Industrial-Turbine &amp; Engine Mfg"],
@@ -33,7 +33,7 @@ var __globScopeSMPtemplate__ = {
    validationRules: (validation) => {
         // ALL Fields (including hidden ones), which should be mandatory in MQL Form type
         var leadGenMandatoryFields = ['custEnq', 'zipPostal', 'city', 'address1', 'busPhone', 'company', 'mmmJobRole1', 'firstName', 'lastName', 'salutation', 'EMSD_jr_other', 'EMSD_app_purp_other'];
-            
+        
         //Conditions
         var leadGenCondition = function () {return ($('[name="salesRequest"]').is(':checked'))};            
         var appOtherCondition = function () {return ($('[name="app13"]').is(':checked'))};        
@@ -46,7 +46,10 @@ var __globScopeSMPtemplate__ = {
         //Set Group(s) of checkboxes and Validation Rules for them
         validation.checkboxesGroups([
 
-            {namesOfgroup: 'app1 app2 app3 app4 app5 app6 app7 app8 app9 app10 app11 app12 app13'},               
+            {namesOfgroup: 'app1 app2 app3 app4 app5 app6 app7 app8 app9 app10 app11 app12 app13',
+            errorMessage: 'Please choose at least one application type'
+            },
+                           
 
         ]);
     },
@@ -54,7 +57,7 @@ var __globScopeSMPtemplate__ = {
     displayRules: (display) => {
         
         display.showOther('app13','EMSD_app_purp_other');            
-            display.showOther('mmmJobRole1', 'EMSD_jr_other');
+           display.showOther('mmmJobRole1', 'EMSD_jr_other');
             
             display.dependIdFromName ("salesRequest", "leadgen", "Yes");
             

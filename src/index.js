@@ -10,35 +10,55 @@ import ifMQLformType from './utils/ifMQLformType.js'
 import getLanguage from './utils/getLanguage.js'
 import getCountry from './utils/getCountry.js'
 
+/**
+ * Initializes settings for the form creation,
+ * Render form, 
+ * Call 'Display' and 'Validation' Components for realizing fields dependencies and Validation Rules according to the settings
+ */
+
 export class FormComponent {
 
     customizedSelectOptions = {};
-    division = "";             
-    fieldsets = [];
-    validationRules;
-    _optionalNames = [];
-    displayRules;      
-    optionsForFilter = {};
-    addedFields;      
-    static langTmpl;
-    fieldsTmpl; 
-    selectedItems = {
-        country: this._identifyLocale('country')
-    }
-    formSettings = {
-        direct: false,
-        exclusiveCountry: false,   
-        classes: ['cmxform', 'js-subvalidate', 'js-emailform', 'mmmMailForm', 'eloquaForm', 'eloquaGlobalForm'],
-    }
-    
- 
 
-    constructor (name) {       
-        this.name = name; 
+    fieldsets = {};         //Fieldsets (pulled from LP)    
+    optionalNames = [];    // Add 'Optional' to labels of each field in this array
+
+
+    optionsForFilter = {};  // Object for options, which should be visible for <select> elements of default fields (Job Role, Industry,...) (pulled from LP) 
+    addedClasses = {};      // Object for CSS classes, which should be customly added to <li> wrappers of fields or to a fieldset (pulled from LP) 
+    staticValidationRules = {}; // Fields, which should be always optional (pulled from LP)
+    customFields = [];      // New added custom fields (pulled from LP)
+    fieldsOrder = [];       // Order for new Added fields
+    changedOrder = [];      // Is used in case if we need to change default fields order
+    changedOrder__after = []; 
+    removedFields = [];
+
+
+    langTmpl;        // will be feeded by a a relevant 'language data template'
+    fieldsTmpl;             // will be feeded by a a relevant 'fields data template'
+    static instance = 0;    // is used for generating a unique ID of every Form Instance on LP
+
+    selectedItems = {       // Is used to preselect any option in <select>
+        country: this._identifyLocale('country')
+    };
+
+    settings = {        // Set of parameters of the <form> tag
+        vendor: 'elq-jsp', // Possible vendors: 'elq', 'elq-jsp', 'elq-direct', 'elq-psd', '3M', 'pdot'        
+        classes: ['cmxform', 'js-subvalidate', 'js-emailform', 'mmmMailForm', 'eloquaForm', 'eloquaGlobalForm'],
+    };
+
+   
+
+    /**
+     * @param {String} name - HTML name of the form
+     */
+
+    constructor(name) {
+        this.name = name;
         this.el = document.querySelector(`[name="${name}"]`);
         this.elId = name;
-        
-        this.hiddenFields = {
+
+        this.hiddenFields = {        // Set of hidden fields of the form
             form_key: "mmm",
             elqFormName: name,
             elqSiteId: "837031577",
@@ -55,34 +75,24 @@ export class FormComponent {
             leadSourcePageTitleMostRecent1: "",
             language1: this._identifyLocale('language'),
             division1: this._identifyDivision(),
-            eloquaFormURL: "",           
-            FormType: "",
+            eloquaFormURL: "",
+            FormType: ifMQLformType(this.name) ? ifMQLformType(this.name) : '',
             SMPVersion: ""
-            
-        };     
-         //Using a variable from mmmSettings
-        this._addInpriorityModules (langTemplate(this.hiddenFields.language1), smpTemplate(this.hiddenFields.division1), baseFieldsTemplate());
-    }    
+        };
+    
 
-    _addInpriorityModules (langTmpl_link, smpTmpl_link, baseTmpl_link) {
-        if (priorityModules) {
-             //Using a variable from mmmSettings
-            priorityModules.push(langTmpl_link);
-            if(ifMQLformType(this.hiddenFields.FormType)) {
-                priorityModules.push(smpTmpl_link);
-            } else {
-                priorityModules.push(baseTmpl_link); 
-            }           
-        }
+        this.constructor.instance++;
+        
+        //Using a variable from mmmSettings (do not use in normal usage)
+        //this._addIn3MpriorityModules (langTemplate(this.hiddenFields.language1), smpTemplate(this.hiddenFields.division1), baseFieldsTemplate());
     }
 
-    _identifyDivision (){
+
+   
+
+    _identifyDivision() {
         const name = 'DCSext.CDC';
         return document.getElementsByTagName('meta')[name].getAttribute("content");
-    }
-    
-    _identifyLanguage() {
-        return getLanguage(document.documentElement.getAttribute('lang'));
     }
 
     _identifyLocale(par) {
@@ -95,297 +105,487 @@ export class FormComponent {
 
         }
         if (par === 'language') {
-            return getLanguage(val.slice(0, val.indexOf('_')));    
+            return getLanguage(val.slice(0, val.indexOf('_')));
         }
     }
 
     setLanguageTemplate(LanguageTemplate) {
-        this.constructor.langTmpl = LanguageTemplate;
+        this.langTmpl = LanguageTemplate;
     }
 
-    setHiddenFields (data) {
+  
+
+    setHiddenFields(data) {
         (Object.entries(data)).forEach((item) => {
             this.hiddenFields[item[0]] = item[1];
         })
     }
 
-    addFieldset (id, arr) {
-        this.fieldsets[id].push(arr);       
+    addFieldset(id, arr) {
+        if (!this.fieldsets[id]) {
+            this.fieldsets[id] = [];
+        }
+        this.fieldsets[id] = [...this.fieldsets[id], ...arr];
     }
 
-    addClass (item, cl) {
-        this.fieldsets.addedClasses[item] = cl;
+
+
+    addClass(item, cl) {
+        this.addedClasses[item] = cl;
     }
 
-    _scriptDynamicLoading (url,targetEl) {
+    changeOrder(arr, place=null) {
+        if (place != 'after') {
+            this.changedOrder.push(arr);
+        } else {
+            this.changedOrder__after.push(arr);
+        }
+        
+        
+    }
+
+    _scriptDynamicLoading(url, targetEl) {
         let jsScript = document.createElement('script');
         jsScript.src = url;
-        jsScript.crossorigin="anonymous";
-        jsScript.async = false;        
+        jsScript.crossorigin = "anonymous";
+        jsScript.async = false;
         targetEl.append(jsScript);
 
         return jsScript;
     }
 
+
+
+    /**
+     * Combine data of options for <select> elements from the 'fields template' and from LP (if provided), then update local 'language template'
+     */
     _mergeFilterOptions() {
 
-        
+        this.customizedSelectOptions = { ...this.fieldsTmpl.optionsForFilter, ...this.optionsForFilter };
+
         for (let key of Object.keys(this.customizedSelectOptions)) {
 
-            const arrAll = this.constructor.langTmpl[key].options
-        const arrCustomOpts = this.customizedSelectOptions[key];
+            const arrAll = this.langTmpl[key].options
+            const arrCustomOpts = this.customizedSelectOptions[key];
 
-        const filteredOptions = arrAll.filter((opt) => {
-           return  arrCustomOpts.indexOf(opt[0]) != -1;           
-        }) 
-        
+            const filteredOptions = arrAll.filter((opt) => {
+                return arrCustomOpts.indexOf(opt[0]) != -1;
+            })
 
-        this.constructor.langTmpl[key].options.all = filteredOptions;
 
-             
+            this.langTmpl[key].options = filteredOptions;
         }
-        
+
     }
 
-   _mergeFieldsets() {       
-        for (let [key,val] of Object.entries(this.fieldsTmpl.fieldsets)) {
-            this.fieldsTmpl.fieldsets[key] = Array.from(new Set([...val, ...this.fieldsets]));           
-        }
-    }
+    /**
+     * Combine data of fieldsets (fields inside) from the 'fields template' and from LP (if provided), then update local 'language template'
+     */
 
-    _mergeStaticValidationRules() { 
-        
-        if (this.fieldsTmpl.staticValidationRules) {
-            const obj = {...this.fieldsTmpl.staticValidationRules, ...this.staticValidationRules};
-            this.fieldsTmpl.staticValidationRules = obj;
-        } else {
-            this.fieldsTmpl.staticValidationRules = this.staticValidationRules;
-        }
-        
-    }
+    _mergeFieldsets() {
 
-    _getOptionalNamesArr() {
-        
-        for (let key of Object.keys(this.fieldsTmpl.staticValidationRules)) {
-           
-           if ((this.fieldsTmpl.staticValidationRules[key] === 'false') || (this.fieldsTmpl.staticValidationRules[key] == false)) {
-                this._optionalNames.push(key);
+        for (let [key, val] of Object.entries(this.fieldsets)) {
+
+            if (this.fieldsTmpl.fieldsets[key]) {
+
+                this.fieldsTmpl.fieldsets[key] = Array.from(new Set([...this.fieldsTmpl.fieldsets[key], ...val]));
+
             }
-            
+            else {
+                this.fieldsTmpl.fieldsets[key] = this.fieldsets[key];
+            }
+
         }
-      
+
+       
+        this.fieldsTmpl.fieldsets = new Map(Object.entries(this.fieldsTmpl.fieldsets));
+
+        for (let arr of this.changedOrder) {
+            this._makeNewOrder(arr, null);
+        }
+
+        for (let arr of this.changedOrder__after) {
+            this._makeNewOrder(arr, 'after');
+        }
     }
+
+
+
+    _makeNewOrder(arr, place) {
+
+      
+            let startItem = arr[arr.length-1];
+            
+            const fieldsetID = this._getFieldsetID(startItem);
+
+            arr.pop();
+            let filteredArr = this.fieldsTmpl.fieldsets.get(fieldsetID).filter((item) => {
+                return !arr.includes(item);
+            });
+            const startIndex = filteredArr.findIndex((i) => {
+                return i === startItem;
+            });
+
+            if (place != 'after') {
+                filteredArr.splice((startIndex), 0, ...arr);
+            } else {
+                filteredArr.splice((startIndex+1), 0, ...arr);
+            }
+
+            
+
+            this.fieldsTmpl.fieldsets.set(fieldsetID, filteredArr);
     
 
+       
+    }
+
+
+
+    _addCustomFields() {
+        if (this.fieldsOrder.length) {
+            for (let arr of this.fieldsOrder) {
+                if (arr[1]) {
+                    const fieldsetID = this._getFieldsetID(arr[1]);
+                    const index = this._getIndexByName(arr[1], fieldsetID);
+
+                    this.fieldsTmpl.fieldsets.get(fieldsetID).splice((index), 0, arr[0]);
+                } else {
+                    const lastFieldsetID = [...this.fieldsTmpl.fieldsets.keys()][(this.fieldsTmpl.fieldsets.size) - 1];
+                    this.fieldsTmpl.fieldsets.get(lastFieldsetID).push(arr[0]);
+                }
+
+
+
+
+            }
+        }
+    }
+
+    _removeFields() {
+        for (let field of this.removedFields) {
+            const fieldsetID = this._getFieldsetID(field);
+            const index = this._getIndexByName(field, fieldsetID);
+            this.fieldsTmpl.fieldsets.get(fieldsetID).splice([index], 1);
+        }
+
+    }
+
+    /**
+     * Combine data from the default data templates with custom ones 
+     */
+
+
+
+    _mergeFieldsTmpl(arr) {
+        for (let objName of arr) {
+            const obj = { ...this.fieldsTmpl[objName], ...this[objName] };
+            this.fieldsTmpl[objName] = obj;
+        }
+    }
+
+    _mergeLangTmpl() {
+        for (let field of this.customFields) {
+            const langpath = this.langTmpl[this.division_cropped];
+            langpath[field.name] = {
+                type: field.type,
+                label: field.label,
+                errMessage: field.errMessage,
+                options: field.options ? field.options : null,
+                label: field.label,
+            }            
+
+            if (field.required === 'false') {            
+                this.fieldsTmpl.staticValidationRules[field.name] = 'false';              
+            }
+        }
+        
+
+    }
+
+    /**
+     * Sets an array with names of fields for adding 'optional' to label
+     */
+
+    _setOptionalNamesArr() {
+
+        for (let key of Object.keys(this.fieldsTmpl.staticValidationRules)) {
+
+            if ((this.fieldsTmpl.staticValidationRules[key] === 'false') || (this.fieldsTmpl.staticValidationRules[key] == false)) {
+                this.optionalNames.push(key);
+            }
+
+        }
+
+    }
+
+
     consoleFieldsets() {
-        console.log(this.fieldsets);
+        console.log(this.fieldsTmpl.fieldsets);
     }
 
     updateFieldset(id, arr) {
         this.fieldsets.id = arr;
     }
-    
-    removeField(fieldsetId, name) {
-        const index = this._getIndexByName(this.fieldset[fieldsetId], name);
-        this.fieldset[fieldsetId].splice([index], 1);
-    }
 
-    _getIndexByName (arr,name) {
-        arr.findIndex((i)=>{
-            i === name;
+
+
+
+    _getIndexByName(name, fieldsetID) {
+
+        return this.fieldsTmpl.fieldsets.get(fieldsetID).findIndex((i) => {
+            return i === name;
         })
+
+
     }
 
-  /*  _selectOptions() {
-        for (let [item, value] of Object.entries(this.selectedItems)) {
-            let select = document.querySelector(`[name="${item}"]`);
-           
+
+    //Using a variable from mmmSettings (this can be a fast workaround in case of any issues with the correct order of scripts loading)
+    _addIn3MpriorityModules(langTmpl_link, smpTmpl_link, baseTmpl_link) {
+        if (priorityModules) {
+
+            priorityModules.push(langTmpl_link);
+            if (this.hiddenFields.FormType != '') {
+                priorityModules.push(smpTmpl_link);
+            } else {
+                priorityModules.push(baseTmpl_link);
+            }
         }
-    } */
-/*
-    newField(data = {label: '', errMessage: '', type: '', options: '', fieldName: '', classToLiWrapper: ""}) {
-       
-        /* to add fields, and then merge with lang template. Afterwards is needed to update routing in order to exclude possible crossing of values (names)
-        this.constructor.langTmpl.customFields[fieldName] =  {
+    }
+
+
+    newField(data = { label: '', errMessage: '', type: '', options: '', name: '', value: '', className: '', required: 'false' }) {
+        const obj = {
+            name: data.name,
             label: data.label,
-            errMessage: errMessage,           
-            type: type,
-            options: options,
-            classToLiWrapper: ""
+            errMessage: data.errMessage,
+            type: data.type,
+            options: data.options,
+            classToLiWrapper: data.className,
+            required: data.required,
+        }
+        if (data.name === 'false') {
+            this.optionalNames.push(data.name);            
         }
 
-        this.DisplayFormFields.addedClasses[fieldName] = '' {
-        
+        this.customFields.push(obj);
     }
-*/
-/*
-    addField(name, toPlaceAfter, fieldsetId) {
-       /*connected with comment in prev method
-       const index = this._getIndexByName (this.fieldsets[fieldsetId],toPlaceAfter)
-        this.fieldsets[fieldsetId].splice((index + 1), 0, name);
+
+    addField(name, placeBefore) {
+        if (placeBefore) {
+            this.fieldsOrder.push([name, placeBefore]);
+        } else {
+            this.fieldsOrder.push([name]);
+        }
+
+    }
+
+    removeField(name) {
+        this.removedFields.push(name);
     }
 
 
-    staticOptionalFields(...fields) {        
-        for (let field of fields) {
-            this.staticValidationRules[field] = 'false';
+
+
+    _getFieldsetID(name) {
+        for (let [id, fieldset] of [...this.fieldsTmpl.fieldsets.entries()]) {
+            if (fieldset.includes(name)) {
+                return id;
+            }
         }
     }
 
-    staticMandatoryFields(...fields) {
-        for (let field of fields) {
-            this.staticValidationRules[field] = 'true';
-        }       
+      
+
+   /* customDisplayRules (display) {
+        this.displayRules[].[];
     }
+    */
 
-*/
 
-/*
-addFormCSSClass(cl) {
-    this.formSettings.classes.push(cl);
-}
-
-rewriteFormCSSClasses([classes]) {
-    this.formSettings.classes = classes;
-}
-*/
-
-render() {   
+    /*
+        staticOptionalFields(...fields) {        
+            for (let field of fields) {
+                this.staticValidationRules[field] = 'false';
+            }
+        }
     
-    const langTmplUrl = langTemplate(this.hiddenFields.language1);
-    let initFields;
-    let initLang;
+        staticMandatoryFields(...fields) {
+            for (let field of fields) {
+                this.staticValidationRules[field] = 'true';
+            }       
+        }
+    
+    */
 
-    if (typeof(__globScopeLanguageTemplate__) === 'undefined') {
+    /*
+    addFormCSSClass(cl) {
+        this.settings.classes.push(cl);
+    }
+    
+    rewriteFormCSSClasses([classes]) {
+        this.settings.classes = classes;
+    }
+    */
+
+    render() {
+
+        const langTmplUrl = langTemplate(this.hiddenFields.language1);
+        let initFields;
+        let initLang;
+
+        if (typeof (__globScopeLanguageTemplate__) === 'undefined') {
             initLang = new Promise((resolve) => {
-            this._scriptDynamicLoading(langTmplUrl, document.head).onload = () => {  
-                this.constructor.langTmpl = __globScopeLanguageTemplate__;
-                resolve()       
-                }
-        })
-     } else {
-            this.constructor.langTmpl = __globScopeLanguageTemplate__;            
-        }    
+                this._scriptDynamicLoading(langTmplUrl, document.head).onload = () => {
+                    this.langTmpl = __globScopeLanguageTemplate__;
 
-    if (ifMQLformType(this.hiddenFields.FormType)) {
-        if (typeof(__globScopeSMPtemplate__) === 'undefined') {
+                    resolve()
+                }
+
+
+            })
+        } else {
+            this.langTmpl = __globScopeLanguageTemplate__;
+        }
+
+        if (this.hiddenFields.FormType != '') {
+            if (typeof (__globScopeSMPtemplate__) === 'undefined') {
                 initFields = new Promise((resolve) => {
-                const smpTmplUrl= smpTemplate(this.hiddenFields.division1);
-                this._scriptDynamicLoading(smpTmplUrl, document.head).onload = () => {
-                this.fieldsTmpl = __globScopeSMPtemplate__; 
-                resolve();           
-                }
-            })
-        }  else {
-            this.fieldsTmpl = __globScopeSMPtemplate__;
-            this._formGenStart();
-        }    
-                  
-    } else {
-       
-            if (typeof(__globScopeBaseFieldstemplate__) === 'undefined') {
-                    initFields = new Promise((resolve) => {
-                const baseTmplUrl = baseFieldsTemplate();
-                this._scriptDynamicLoading(baseTmplUrl, document.head).onload = () => {        
+                    const smpTmplUrl = smpTemplate(this.hiddenFields.division1);
+                    this._scriptDynamicLoading(smpTmplUrl, document.head).onload = () => {
+                        this.fieldsTmpl = __globScopeSMPtemplate__;
+                        resolve();
+                    }
+                })
+            } else {
+                this.fieldsTmpl = __globScopeSMPtemplate__;
+                this._formGenStart();
+            }
+
+        } else {
+
+            if (typeof (__globScopeBaseFieldstemplate__) === 'undefined') {
+                initFields = new Promise((resolve) => {
+                    const baseTmplUrl = baseFieldsTemplate();
+                    this._scriptDynamicLoading(baseTmplUrl, document.head).onload = () => {
+                        this.fieldsTmpl = __globScopeBaseFieldstemplate__;
+                        resolve();
+                    }
+                })
+            }
+            else {
                 this.fieldsTmpl = __globScopeBaseFieldstemplate__;
-                resolve();
-                } 
-            })
             }
-         else {
-                    this.fieldsTmpl = __globScopeBaseFieldstemplate__;
-            }               
-    }
+        }
 
 
-  
 
-    
-    
-Promise.all([initLang,initFields]).then(    
-    resolve => { this._formRender() }
-)
-.then(
-    resolve => {
-            loadPageModule('kungfu/EmailForm/EmailOptions');
-            const scripts3M = ["//www.3m.com/3m_theme_assets/themes/3MTheme/assets/scripts/build/kungfu/Eloqua/eloquaCountries.js",
-                                "//www.3m.com/3m_theme_assets/themes/3MTheme/assets/scripts/build/kungfu/Eloqua/eloquaConsent.js",
-                                "//www.3m.com/3m_theme_assets/themes/3MTheme/assets/scripts/build/kungfu/Eloqua/eloquaLanguages.js",
-                                "//www.3m.com/3m_theme_assets/themes/3MTheme/assets/scripts/build/kungfu/Eloqua/eloquaStates.js",
-                           ]
-    
-            function loadScript () {
-    
-                for (let script of scripts3M) {
-                    this._scriptDynamicLoading(script, this.el.closest('div'));
+
+
+
+        Promise.all([initLang, initFields]).then(
+            resolve => {
+                this._formRender()
+            }
+        )
+            .then(
+                resolve => {
+                    loadPageModule('kungfu/EmailForm/EmailOptions');
+                    const scripts3M = ["//www.3m.com/3m_theme_assets/themes/3MTheme/assets/scripts/build/kungfu/Eloqua/eloquaCountries.js",
+                        "//www.3m.com/3m_theme_assets/themes/3MTheme/assets/scripts/build/kungfu/Eloqua/eloquaConsent.js",
+                        "//www.3m.com/3m_theme_assets/themes/3MTheme/assets/scripts/build/kungfu/Eloqua/eloquaLanguages.js",
+                        "//www.3m.com/3m_theme_assets/themes/3MTheme/assets/scripts/build/kungfu/Eloqua/eloquaStates.js",
+                    ]
+
+                    function loadScript() {
+
+                        for (let script of scripts3M) {
+                            this._scriptDynamicLoading(script, this.el.closest('div'));
+                        }
+
+
+
+                    }
+
+                    loadScript.call(this);
+                    loadPageModule('kungfu/Eloqua/globalFormsModule');
+
+
+
+
                 }
-    
-               
-                
-            }
-    
-            loadScript.call(this);
-            loadPageModule('kungfu/Eloqua/globalFormsModule');             
-                
-    
-    
+            )
+
+        const dynamicVariable = '__load_Validation-Display_Rules__' + this.constructor.instance;
+        domReady[dynamicVariable] = () => {
             
-    }
-)
+            this.display = new DisplayFormFields(this.el);  // init Display Rules
 
+            // Final Optional Fields init (After Display was initialized and custome adding methods were used)
+            this._setOptionalNamesArr();           
+
+            this.fieldsTmpl.displayRules(this.display);         // pulled from template             
+            if (typeof this.displayRules === 'function') {   // pulled from LP                          
                 
-domReady.__loadValidationRules__ = () => {    
-    this.display = new DisplayFormFields(this.el);
+                this.displayRules(this.display);
+            }
+        
+
+            this.validation = new FormValidationRules(this.el, this.elId);  // init Validation Rules
+
+            this.fieldsTmpl.validationRules(this.validation);   // pulled from template
+            if (typeof this.validationRules === 'function') {   // pulled from LP
+                this.validationRules(this.validation);
+            }
 
 
-    // Final Optional Fields init (After Display was initialized and custome adding methods were used)
-    this._getOptionalNamesArr();
-    // Add 'Optional' to labels of optional fields (once is LP loaded)                
-    this.display.makeOptional(this._optionalNames,this.constructor.langTmpl.optionalText);               
-    
-    this.fieldsTmpl.displayRules(this.display);               
-    this.validation = new FormValidationRules(this.el, this.elId);
-    this.fieldsTmpl.validationRules(this.validation);
-    this.validation.render();
-}
-                
+            // Add 'Optional' to labels of optional fields              
+            this.display.makeOptional(this.optionalNames, this.langTmpl.optionalText);           
+          
 
-               
-                
-
-
+            this.validation.render(); // All validation methods should go above
 
         }
+    }
 
 
     _formRender() {
-                this.customizedSelectOptions = {...this.fieldsTmpl.optionsForFilter, ...this.optionsForFilter};
 
-                this.division = this.hiddenFields.division1.slice(0, this.hiddenFields.division1.indexOf(' '));       
-                this.hiddenFields.SMPVersion = this.fieldsTmpl.SMPVersion;
 
-                this._mergeFilterOptions();
-                this._mergeFieldsets();
-                this._mergeStaticValidationRules();
-                        
-                let form = new FormAssetsCreator({
-                    el: this.el, 
-                    hiddenFields: this.hiddenFields,
-                    langTemplate: this.constructor.langTmpl, 
-                    fieldsTemplate: this.fieldsTmpl,
-                    optionsForFilter: this.optionsForFilter,
-                    division: this.division,
-                    name: this.name,
-                    formSettings: this.formSettings,
-                    selectedItems: this.selectedItems,                  
-                });
-                
-                form.render();
+        this.division_cropped = this.hiddenFields.division1.slice(0, this.hiddenFields.division1.indexOf(' '));
+
+        this.hiddenFields.SMPVersion = this.fieldsTmpl.SMPVersion;
+
+        //Merging data from templates with what was provided on LP customly
+        this._mergeFilterOptions();
+        this._mergeLangTmpl();        
+        this._mergeFieldsets();
+        this._addCustomFields();
+        this._removeFields();
+       
+        this._mergeFieldsTmpl(['staticValidationRules', 'addedClasses']);
+
+
+
+
+        const form = new FormAssetsCreator({
+            el: this.el,
+            hiddenFields: this.hiddenFields,
+            langTemplate: this.langTmpl,
+            fieldsTemplate: this.fieldsTmpl,
+            division: this.division_cropped,
+            name: this.name,
+            settings: this.settings,
+            selectedItems: this.selectedItems,
+        });
+
+        form.render();
     }
 
-    
 
-  
+
+
 }
 
 window.FormComponent = FormComponent;
