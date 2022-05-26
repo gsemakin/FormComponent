@@ -2,7 +2,7 @@
   <head>
 
 <meta name="DCSext.CDC" content="EMSD - Electronics Materials Solutions Division">
-<meta name="DCSext.locale" content="en_GB">
+<meta name="DCSext.locale" content="ro_GB">
 
    <!-- STYLESHEET -->
 <link rel="stylesheet" href="//www.3m.com/3m_theme_assets/themes/3MTheme/assets/css/build/unicorn.css">
@@ -50,6 +50,18 @@
   CTA: "Request a Sample"  
   })  
 
+ // form1.settings.vendor = 'elq-direct'; // Possible vendors: 'elq', 'elq-jsp', 'elq-direct'
+
+  
+
+
+
+
+
+
+
+
+
  form1.addClass('CA', 'testCSSclass');
 
   form1.newField({
@@ -57,9 +69,8 @@
       errMessage: 'Please specify', 
       type: 'text', 
       name: 'testCustomField', 
-      value: '', 
-      //className: 'testClass', 
-      required: 'false'}); // <- TODO
+      required: 'false',
+      value: ''}); 
 
   form1.addField('testCustomField', 'custEnq');
 
@@ -134,6 +145,67 @@
   
   form2.render();
 </script-->
+
+
+
+<!--div class="mix-MMM--hdg_spaced MMM--bodyCopy">
+  <div class="MMM--gapBottom MMM--contentWrapper MMM--contentWrapper_padded MMM--clear">
+    <style type="text/css">
+    .eloquaForm .MMM--blockFormList > li {
+      margin: 15px 0;
+    }
+    ul.MMM--tableBlock-li-inner .eloquaForm li {
+      float:none;
+    }
+    </style>
+
+      <form name="TEST-EMSD-202202-en_EMEA-CON-testLeadGen_emsd3"></form>
+
+  </div>
+</div-->
+
+<!--script>
+
+
+  var form3 = new window.FormComponent("TEST-EMSD-202202-en_EMEA-CON-testLeadGen_emsd3");
+  
+  form2.setHiddenFields({          
+  sFDCLastCampaignName: "EMSD-2002-EMEA-GLC-MUL-Lead_gen_test_campaign-A",
+  sFDCLastCampaignID: "7012K00000169GbQAI",
+  sFDCLastCampaignStatus: "Optional",
+  leadSourceMostRecent1: "Website",   
+  FormType: "Sample Request",
+  CTA: "Request a Sample"
+  
+  })  
+
+ 
+  
+  form3.render();
+
+
+
+
+  
+</script-->
+
+<!-- START of code added for phone number validation -->
+<link rel="stylesheet" href="https://img04.en25.com/Web/3MCompanyGlobal/{f77caf4c-e036-42f5-bc54-cb04586a9798}_intlTelInput.css?update=8">
+<script src="https://img04.en25.com/Web/3MCompanyGlobal/{443ec907-e8eb-46f4-984a-7166c37b2d9b}_intlTelInput.js?update=8"></script>
+
+<script>
+// edit to match the IDs on your page
+var busPhoneid = "#busPhoneID"; // Enter this for the first form on the page
+var countryselectid = "#countryID"; // Enter this for the first form on the page
+
+// adjust as needed
+var prefCountries = ['gb']; // these will appear at the top of the list the first must match the pre-selected country in the form
+var placeholderphoneformat = "FIXED_LINE"; // can be "MOBILE" or "FIXED_LINE"
+var validationtype = "SOFT"; // can be "SOFT" or "HARD" - Soft = form will submit with a missing or invalid number.  Hard = form will not submit with a missing or invalid number.
+</script>
+
+<script src="https://img04.en25.com/Web/3MCompanyGlobal/{80439e2b-4bf7-49b4-ac6b-713f2f163347}_AJ_HELPER_intlTelInput__STRIPPED__Minified.js?update=8"></script>
+<!-- END of code added for phone number validation -->   
 
          <!-- Scripts -->
 

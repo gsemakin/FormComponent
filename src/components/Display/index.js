@@ -17,8 +17,7 @@
               this.rules = [];
         
             this.constructor.instance++;
-              this.initEvent();
-             
+              this.initEvent();            
           }
         
           initEvent() {
@@ -233,12 +232,13 @@
           let optVal = '';
           
           $(fNameToShowOpts).each((i2,opt) => {    
-        
+       
             if ($(opt).val() != null) {
              $(opt).hide();
              $(arrOfOpts).each((i,item) => {
               
-                 if (item.replace("&amp;", "&") === $(opt).val()) {                
+                 if (item.replace("&amp;", "&") === $(opt).val().replace("&amp;", "&")) {          
+                       
                      lastChosenOpt = $(opt).val();
                    	if (optVal != lastChosenOpt) {
                      optNum ++;
@@ -315,7 +315,7 @@
                 this._findInScheme(scheme, name, arrOfOpts);
       
                 let fNameToShowOpts = $(this.el).find(`[name="${fNameToShow}"] option`);
-                
+             
                 this._showOptions (fNameToShow, fNameToShowOpts, arrOfOpts, lastChosenOpt);                
        
               })
@@ -379,3 +379,5 @@
          this.rules.push([field1, handler]);
         }
          }
+
+window.DisplayFormFields = DisplayFormFields;

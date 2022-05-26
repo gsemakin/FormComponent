@@ -45,6 +45,8 @@ export class FormComponent {
     settings = {        // Set of parameters of the <form> tag
         vendor: 'elq-jsp', // Possible vendors: 'elq', 'elq-jsp', 'elq-direct', 'elq-psd', '3M', 'pdot'        
         classes: ['cmxform', 'js-subvalidate', 'js-emailform', 'mmmMailForm', 'eloquaForm', 'eloquaGlobalForm'],
+       busPhone: false,
+       countryCode: this._identifyLocale('countryCode')
     };
 
    
@@ -59,7 +61,7 @@ export class FormComponent {
         this.elId = name;
 
         this.hiddenFields = {        // Set of hidden fields of the form
-            form_key: "mmm",
+        
             elqFormName: name,
             elqSiteId: "837031577",
             elqCampaignId: "",
@@ -82,7 +84,8 @@ export class FormComponent {
     
 
         this.constructor.instance++;
-        
+
+
         //Using a variable from mmmSettings (do not use in normal usage)
         //this._addIn3MpriorityModules (langTemplate(this.hiddenFields.language1), smpTemplate(this.hiddenFields.division1), baseFieldsTemplate());
     }
@@ -107,10 +110,19 @@ export class FormComponent {
         if (par === 'language') {
             return getLanguage(val.slice(0, val.indexOf('_')));
         }
+        if (par === 'countryCode') {
+            return val.slice(val.lastIndexOf('_') + 1).toLocaleLowerCase();
+
+        }
+
+        
+
+
     }
 
     setLanguageTemplate(LanguageTemplate) {
         this.langTmpl = LanguageTemplate;
+        
     }
 
   
@@ -119,6 +131,9 @@ export class FormComponent {
         (Object.entries(data)).forEach((item) => {
             this.hiddenFields[item[0]] = item[1];
         })
+
+     
+        
     }
 
     addFieldset(id, arr) {
@@ -139,21 +154,33 @@ export class FormComponent {
             this.changedOrder.push(arr);
         } else {
             this.changedOrder__after.push(arr);
-        }
-        
+        }       
         
     }
 
-    _scriptDynamicLoading(url, targetEl) {
+    _scriptDynamicLoading(url, targetEl, ifAsync = true) {
         let jsScript = document.createElement('script');
         jsScript.src = url;
         jsScript.crossorigin = "anonymous";
-        jsScript.async = false;
+        jsScript.async = ifAsync;
         targetEl.append(jsScript);
 
         return jsScript;
     }
 
+   _cssDynamicLoading(url) {
+        let elem = document.createElement( 'link' );
+        elem.rel = 'stylesheet';
+        elem.type = 'text/css';
+        document.body.appendChild( elem );
+        elem.href = url;
+    }
+
+    loadScript(scripts, ifAsync=false) {
+        for (let script of scripts) {
+            this._scriptDynamicLoading(script, this.el.closest('div'), ifAsync);
+        }
+    }  
 
 
     /**
@@ -161,16 +188,21 @@ export class FormComponent {
      */
     _mergeFilterOptions() {
 
-        this.customizedSelectOptions = { ...this.fieldsTmpl.optionsForFilter, ...this.optionsForFilter };
-
+        this.customizedSelectOptions = { ...this.fieldsTmpl.optionsForFilter, ...this.optionsForFilter };      
+        
+     
         for (let key of Object.keys(this.customizedSelectOptions)) {
 
-            const arrAll = this.langTmpl[key].options
-            const arrCustomOpts = this.customizedSelectOptions[key];
+            const arrAll = this.langTmpl[key].options;
+            const arrCustomOpts = this.customizedSelectOptions[key].map((opt)=>{
+                return opt.replace("&amp;", "&");
+            });            
 
-            const filteredOptions = arrAll.filter((opt) => {
+            const filteredOptions = arrAll.filter((opt) => {               
                 return arrCustomOpts.indexOf(opt[0]) != -1;
-            })
+            });
+
+            
 
 
             this.langTmpl[key].options = filteredOptions;
@@ -429,7 +461,9 @@ export class FormComponent {
     }
     */
 
-    render() {
+    render() {    
+
+
 
         const langTmplUrl = langTemplate(this.hiddenFields.language1);
         let initFields;
@@ -437,30 +471,32 @@ export class FormComponent {
 
         if (typeof (__globScopeLanguageTemplate__) === 'undefined') {
             initLang = new Promise((resolve) => {
-                this._scriptDynamicLoading(langTmplUrl, document.head).onload = () => {
+                this._scriptDynamicLoading(langTmplUrl, document.head, false).onload = () => {
                     this.langTmpl = __globScopeLanguageTemplate__;
 
-                    resolve()
+                    resolve();
                 }
 
 
             })
         } else {
             this.langTmpl = __globScopeLanguageTemplate__;
+            resolve();
         }
 
         if (this.hiddenFields.FormType != '') {
             if (typeof (__globScopeSMPtemplate__) === 'undefined') {
                 initFields = new Promise((resolve) => {
                     const smpTmplUrl = smpTemplate(this.hiddenFields.division1);
-                    this._scriptDynamicLoading(smpTmplUrl, document.head).onload = () => {
+                    this._scriptDynamicLoading(smpTmplUrl, document.head, false).onload = () => {
                         this.fieldsTmpl = __globScopeSMPtemplate__;
                         resolve();
                     }
                 })
             } else {
                 this.fieldsTmpl = __globScopeSMPtemplate__;
-                this._formGenStart();
+                //this._formGenStart(); 
+                resolve();
             }
 
         } else {
@@ -468,7 +504,7 @@ export class FormComponent {
             if (typeof (__globScopeBaseFieldstemplate__) === 'undefined') {
                 initFields = new Promise((resolve) => {
                     const baseTmplUrl = baseFieldsTemplate();
-                    this._scriptDynamicLoading(baseTmplUrl, document.head).onload = () => {
+                    this._scriptDynamicLoading(baseTmplUrl, document.head, false).onload = () => {
                         this.fieldsTmpl = __globScopeBaseFieldstemplate__;
                         resolve();
                     }
@@ -476,6 +512,7 @@ export class FormComponent {
             }
             else {
                 this.fieldsTmpl = __globScopeBaseFieldstemplate__;
+                resolve();
             }
         }
 
@@ -486,40 +523,42 @@ export class FormComponent {
 
         Promise.all([initLang, initFields]).then(
             resolve => {
-                this._formRender()
-            }
+            
+                this._formRender();
+
+               }
         )
             .then(
-                resolve => {
-                    loadPageModule('kungfu/EmailForm/EmailOptions');
+                resolve => {                   
+
                     const scripts3M = ["//www.3m.com/3m_theme_assets/themes/3MTheme/assets/scripts/build/kungfu/Eloqua/eloquaCountries.js",
                         "//www.3m.com/3m_theme_assets/themes/3MTheme/assets/scripts/build/kungfu/Eloqua/eloquaConsent.js",
                         "//www.3m.com/3m_theme_assets/themes/3MTheme/assets/scripts/build/kungfu/Eloqua/eloquaLanguages.js",
                         "//www.3m.com/3m_theme_assets/themes/3MTheme/assets/scripts/build/kungfu/Eloqua/eloquaStates.js",
-                    ]
+                    ];
 
-                    function loadScript() {
+                    
 
-                        for (let script of scripts3M) {
-                            this._scriptDynamicLoading(script, this.el.closest('div'));
-                        }
-
-
-
-                    }
-
-                    loadScript.call(this);
+                   
+                    loadPageModule('kungfu/EmailForm/EmailOptions');
+                    this.loadScript(scripts3M, false);
                     loadPageModule('kungfu/Eloqua/globalFormsModule');
 
+                    
 
+                   // resolve();
+                  }   
 
-
-                }
+                   
+                
             )
+            //.then(this._scriptDynamicLoading('//img04.en25.com/Web/3MCompanyGlobal/%7B80439e2b-4bf7-49b4-ac6b-713f2f163347%7D_AJ_HELPER_intlTelInput__STRIPPED__Minified.js?update=8', this.el.closest('div'), false))
 
+            
+     
         const dynamicVariable = '__load_Validation-Display_Rules__' + this.constructor.instance;
         domReady[dynamicVariable] = () => {
-            
+         
             this.display = new DisplayFormFields(this.el);  // init Display Rules
 
             // Final Optional Fields init (After Display was initialized and custome adding methods were used)
@@ -547,11 +586,11 @@ export class FormComponent {
             this.validation.render(); // All validation methods should go above
 
         }
+
     }
 
 
     _formRender() {
-
 
         this.division_cropped = this.hiddenFields.division1.slice(0, this.hiddenFields.division1.indexOf(' '));
 
@@ -566,7 +605,13 @@ export class FormComponent {
        
         this._mergeFieldsTmpl(['staticValidationRules', 'addedClasses']);
 
+      if (this._getFieldsetID('busPhone')) {
+          this.settings.busPhone = true;
+         
+        }
+     
 
+         
 
 
         const form = new FormAssetsCreator({
@@ -580,7 +625,10 @@ export class FormComponent {
             selectedItems: this.selectedItems,
         });
 
+        form._busPhoneSettings(this._identifyLocale('countryCode')); 
+
         form.render();
+ 
     }
 
 
@@ -589,3 +637,5 @@ export class FormComponent {
 }
 
 window.FormComponent = FormComponent;
+
+
