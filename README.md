@@ -61,6 +61,20 @@ Render a form ( :heavy_exclamation_mark: This method must always be the last one
 
 ### There are optional methods, used for manipulations with the form directly from LP:
 
+:red_circle: `settings` - Allow to set some parameters of the form tag, apply custom (different from default) settings needed for the form generation
+
+#### To change from internal TY page (which is by default) to external:
+
+```javascript
+settings.vendor = 'elq-direct', 
+```
+
+#### To change leadgen form from the option with checkbox "I want Sales Contact" (which is by default) to an option without that checkbox (+all leadgen fields are visible)
+
+```javascript
+settings.leadgenBasic = true,
+```
+
 :red_circle: `changeOrder(arr)` 
 OR
 `changeOrder(arr, 'after')`
@@ -87,25 +101,41 @@ New field declaration. (Adding a new declarated field to a form is managed via a
      * @param {Object} data - Includes settings of the new field:
      * label: '',       - Mandatory
      * errMessage: '',  - Mandatory
-     * type: '',        - Mandatory (possible values for type: 'text', 'textarea', checkbox', 'radio', 'select', 'header')
+     * type: '',        - Mandatory: (possible values for type: 'text', 'textarea', checkbox', 'radio', 'select', 'header')
      * options: '',     - only in case if type = 'select'
-     * name: '',        - Mandatory (should be matching of the HTML name field of the form) 
-     * value: '',       - only in case if type = 'checkbox'/'radio' 
-     * className: '',   - Optional class for <li> wrapper of the field
-     * required:        - can be 'true' or 'false'. By default it's false.
+     * name: '',        - Mandatory: (should be matching with the HTML name field of the form)      
+     * className: '',   - Optional: class for <li> wrapper of the field
+     * required:        - Optional: can be 'true' or 'false'. By default it's 'false'.
+     * condition:       - Optional: when this new field should depend on any other field in terms of Validation. function in format, when it returns Boolean : function () {return (--your js condition here--)},
+     * triggerName: ''  - Optional: HTML name of the field, which impacts on the case if new field should be mandatory or optional
 */
+
+newField({ label: '', errMessage: '', type: '', options: '', name: '', value: '', className: '', required: 'false' })
+
 ```
-**Example:**
+**Examples:**
+1) Adding a text field, which must be always mandatory:
 ```javascript
   form1.newField({
-      label: 'Last custom checkbox', 
-      errMessage: 'Please specify', 
-      type: 'checkbox', 
-      name: 'testChbx', 
-      value: 'on', 
-      //className: '',      
+      label: 'Text field', 
+      errMessage: 'This field is mandatory', 
+      type: 'text', 
+      name: 'txtField',       
+      required: 'true'     
     });
 ```
+2) Adding a text field, which should be mandatory only in case if field with HTML name "salesRequest" is checked:
+```javascript
+form1.newField({
+      label: 'Custom field txt', 
+      errMessage: 'Please specify', 
+      type: 'text', 
+      name: 'testCustomField',      
+      condition: function () {return ($('[name="salesRequest"]').is(':checked'))},
+      triggerName: 'salesRequest'
+}) 
+```
+
 
 :red_circle: `addField(name)`
 OR
@@ -117,6 +147,9 @@ Adds a new field to LP
      * @param {string} placeBefore - HTML name of the form field, before which a new field should be added. 
      * If this variable is absent, new field is being added to the very end of the form. 
 */
+
+addField(name, placeBefore)
+
 ```
 **Example:**
 ```javascript
@@ -130,25 +163,153 @@ Removes a field from the form
 /**
     * @param {string} name - HTML name of the form
 */
+removeField(name)
 ```
 **Example:**
 ```javascript
     form1.removeField('address1'); /* Removes a field with HTML name 'address1' from the form */ 
 ```    
 
-:red_circle: addClass(item, cl)
-Adds CSS class, which should be customly added to <li> wrapper of the field (if HTMl name of the field is provided) or to a fieldset (if ID of the fieldset is provided)
+:red_circle: `addClass(item, cl)`
+Adds CSS class, which can be added according to 1 of the 3 scenarios: 
+1) To a fieldset (if ID of the fieldset is provided, as 'item' parameter. On lead gen forms there are 2 fieldsets: with ID = "CA" and with ID = "leadgen")
+2) To li, which is a  wrapper of the field (if HTMl name of the field is provided as 'item' parameter) 
+3) form  tag (if parameter 'item' is equal to 'form')
+ 
 ```javascript
 /**
-     * @param {string} item HTML name of the field or ID of the fieldset
+     * @param {string} item - item shoud be equal to: ID of fieldset, HTML name of the field, or 'form'
      * @param {string} cl class name
      *      
 */
+addClass(item, cl)
+```
+**Examples:**
+1) Adding a CSS class 'MMM--gapTopMed'  to a fieldset
+ with ID 'leadgen':
+```javascript
+form1.addClass('leadgen', 'MMM--gapTopMed');
+
+```
+2) Adding a CSS class 'inputLiClass'  to a li, which is a  wrapper of the field with HTML name 'firstName' like this:
+```html
+<li class="inputLiClass">
+    <input name = "firstName" ...>
+</li>
+```
+
+```javascript
+form1.addClass('firstName', 'inputLiClass');
+```
+
+3) Adding a CSS class 'formTESTclass'  to a form tag:
+```javascript
+form1.addClass('form', 'formTESTclass');
+```
+
+:red_circle: `setLabel(name, val)`
+Sets a new text for label of the field
+```javascript
+ /**
+     * @param {string} name - HTM name of the field
+     * @param {string} val - new Text for the label 
+     */
+    setLabel(name, val)
 ```
 **Example:**
 ```javascript
-form1.addClass('leadgen', 'MMM--gapTopMed');
+form1.setLabel('country', 'Country');
 ```
+
+:red_circle: `setErrMessage(name, val)`
+Set a new text for the error message of the field
+```javascript
+ /**
+     * @param {string} name  - HTM name of the field
+     * @param {string} val  - new Text for the error message  
+     */
+    setErrMessage(name, val)
+```
+**Example:**
+```javascript
+form1.setErrMessage('EMSD_app_purp_other', 'Please specify your application type');
+```
+
+
+:red_circle: `setOptions(name, val)`
+Set new options in select field
+```javascript
+ /**
+     * @param {string} name - HTM name of the field
+     * @param {Array of Arrays} val - // [[Backend value, Frontend value], [Backend value, Frontend value], [Backend value, Frontend value], [...]] 
+     */
+    setOptions(name, val)
+```
+**Example:**
+```javascript
+form1.setOptions('mmmIndustry1', [
+    // [[Backend value, Frontend value]
+    ["Transp-Bus Mfg", "Bus Manufacturing"],
+    ["Transp-Car Care Centers", "Car Care Centers"],
+    ["Industrial-Chemical Mfg", "Chemical Manufacturing"],
+    ["Transp-Collison Repair", "Collison Repair"],
+    ["Transp-Comm & Specialty Veh Maint", "Commercial & Specialty Vehicle Maintenance"],
+]);
+```
+
+:red_circle: `selectedItems - (works for selects, checkboxes, radio buttons)`
+Preselects option in select tag
+
+***Add a key, equal to a fields' HTML name and store there a value of an option, which you'd like to have preselected, like below***
+**Examples:**
+1) To make Germany be a preselected country
+```javascript
+form1.selectedItems.country = 'Germany';
+```
+
+2) To make Firefighter be a preselected jobRole
+```javascript
+form1.selectedItems.mmmJobRole1 = 'Firefighter';
+```
+
+**Make checkbox to be checked**
+Add a key, equal to a fields' HTML name and store there a value equal to: true
+
+```javascript
+/* make checkbox with HTML name 'app1' to be checked */
+  form1.selectedItems.app1 = true;
+```
+
+
+:red_circle: `updateSelectOpts(name, ...options)`
+Rewrites options in select field in provided order
+
+**Example:**
+Rewrites options in select field (HTML name === "mmmJobRole1") in provided order ("Firefighter","Safety Manager","Other"_)
+```javascript
+ form1.updateSelectOpts ("mmmJobRole1", "Firefighter","Safety Manager","Other");
+```
+
+:red_circle: `hideFields(...items)`
+ items - HTML name(s) of the field(s), needed to be hidden (by adding a CSS class 'MMM--isVisuallyHidden'). Also, this method makes a field to be optional in terms of Validation.
+```javascript
+ /**
+     * 
+     * @param  {...string} items - Strings of items, separated with commas
+     */
+    hideFields(...items)
+```
+
+**Examples:**
+1) To hide a field with HTML name 'EMSD_cust_type'
+```javascript
+form1.hideFields('EMSD_cust_type'); 
+```
+2) To hide fields with HTML names 'app1','app2',..., app13
+```javascript
+ form1.hideFields('app1','app2','app3','app4','app5','app6','app7','app8','app9','app10','app11','app12','app13');
+```
+
 <!--
 + **Methods for Validation Rules**
 Validation Rules of the form is based on jQuery Validator.
