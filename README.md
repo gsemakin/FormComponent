@@ -131,16 +131,6 @@ newField({ label: '', errMessage: '', type: '', options: '', name: '', value: ''
       name: 'txtField',
     });
 ```
-2) Adding a text field, which should be mandatory only in case if field with HTML name "salesRequest" is checked:
-```javascript
-form1.newField({
-      label: 'Custom field txt', 
-      errMessage: 'Please specify', 
-      type: 'text', 
-      name: 'testCustomField',      
-      
-}) 
-```
 
 :red_circle: `addField(name)`
 OR
