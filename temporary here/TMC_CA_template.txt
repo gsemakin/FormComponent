@@ -211,7 +211,7 @@
         <div class="rG-68-Titling rSG-68-Titling MMM--gapBottom MMM--contentWrapper MMM--contentWrapper_padded MMM--clear dpl-15232016172337246">
             <div class="MMM--pageSectionTitle MMM--wysiwyg"> 
                 <!--h2 class="MMM--hdg MMM--hdg_2 mix-MMM--hdg_spaced">Lead Gen template</h2-->
-                <h2 class="MMM--hdg MMM--hdg_2 mix-MMM--hdg_spaced">LeadGen Template</h2>
+                <h2 class="MMM--hdg MMM--hdg_2 mix-MMM--hdg_spaced">CA Template</h2>
                 <p class="">Ask our expert about 3M abrasive solutions and <span style="color:blue;">request a demo / request a sample</span>. Register and our 3M expert will contact you directly.
               </p><p class="">
   Please be advised that we can only contact professional, industrial users that meet the required conditions. If these conditions aren’t met, we recommend visiting 3M website from where can contact our distributors partners who will be able to provide you with more information and help you find the right product.
@@ -261,7 +261,7 @@
         //Change to External TY page
         form1.settings.vendor = 'elq-direct'; 
         //Choosing a correct TMC template. Possible values: "TMC_CA" and "TMC_Basic"
-        form1.settings.leadGenType = "TMC_Basic";
+        form1.settings.leadGenType = "TMC_CA";
 
         form1.render();
     
