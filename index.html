@@ -243,6 +243,8 @@
   </div>
   
   <!-- Form Component Script -->
+  
+  <!--script src="https://images.engage.3m.com/Web/3MCompanyGlobal/%7b74b63b20-014d-49b3-b044-71789f42f8d9%7d_FC_commonConfig.js"></script-->
   <!--script src="https://images.engage.3m.com/Web/3MCompanyGlobal/{98fa9dd5-8dd4-4f5c-88d5-48865ebcce44}_FormComponent.js"></script-->
   <script src="./dist/app.js"></script>
 
@@ -262,30 +264,29 @@
         //Change to External TY page
         form1.settings.vendor = 'elq-direct'; 
         //Choosing a correct TMC template. Possible values: "TMC_CA" and "TMC_Basic"
-        form1.settings.leadGenType = "TMC_Basic";
-
-        form1.newField({ 
-            name: 'customfield', 
-            label: 'New field', 
-            errMessage: 'This field is mandatory', 
+        form1.settings.leadGenType = "TMC_CA";
+        // Declare new field
+      /*  form1.newField({ 
+            name: 'customfield2', 
+            label: {en: 'English New field', fr: 'French New field'}, 
+            errMessage: {en: 'English error message', fr: 'French error message'}, 
             type: 'select', 
-            options: [
-                //Backend value - Frontend Value
-                ['option 1', 'option 1'], 
-                ['option 2', 'option 2']
-            ], 
-        });
-
-        form1.addField('customfield');
+            options: {
+                en: [['opt1', 'English Option 1'], ['opt2', 'English Option 2']], 
+                fr: [['opt1', 'French Option 1'], ['opt2', 'French Option 2']]
+            }, 
+        }); */
+        // Add field
+      //  form1.addField('customfield2');
         
         // Declare new field
-        form1.newField({ name: 'customfield2', label: {en: 'What is a test', fr: 'French txt'}, errMessage: {en: 'What is a test', fr: 'French txt'}, type: 'select', options: {en: [['1', '2'], ['3', '4']], fr: [['1', 'fr'], ['3', 'fr']]}, });
+    //    form1.newField({ name: 'customfield2', label: {en: 'English New field', fr: 'French New field'}, errMessage: {en: 'English error message', fr: 'French error message'}, type: 'select', options: {en: [['opt1', 'English Option 1'], ['opt2', 'English Option 2']], fr: [['opt1', 'French Option 1'], ['opt2', 'French Option 2']]}, });
         // Add field
-        form1.addField('customfield2');
+     //   form1.addField('customfield2');
 
 
 
-        form1.newField({ 
+    /*    form1.newField({ 
             name: 'customfield3', 
             label: 'New field', 
             errMessage: 'This field is mandatory', 
@@ -295,7 +296,19 @@
         });
 
         form1.addField('customfield3');
-       
+
+
+        form1.newField({ 
+            name: 'customfield4', 
+            label: 'New field4', 
+
+            type: 'text', 
+          
+           
+        });
+
+        form1.addField('customfield4');
+       */
 
         form1.render();
     
